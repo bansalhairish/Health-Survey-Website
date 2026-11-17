@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Public Health Survey</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background-color: #f2f7f4;
+            margin: 0;
+        }
+
+        header {
+            background-color: #176b55;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        nav {
+            background-color: #104c3e;
+            text-align: center;
+            padding: 10px;
+        }
+
+        button {
+            background-color: #176b55;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #104c3e;
+        }
+
+        .container {
+            width: 85%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .box {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Public Health Survey Platform</h1>
+    <p>Community Health Awareness Project</p>
+</header>
+
+<!-- LOGIN -->
+
+<div class="container">
+
+    <div class="box" id="login">
+
+        <h2>Admin Login</h2>
+
+        <input type="password" id="pin"
+        placeholder="Enter Admin Password">
+
+        <button onclick="login()">Login</button>
+
+        <button onclick="continueAsUser()">Continue as User</button>
+
+    </div>
+
+</div>
+
+<!-- MAIN WEBSITE -->
+
+<div id="website" style="display:none;">
+
+    <nav>
+        <button onclick="showPage('home')">Home</button>
+
+        <button onclick="showPage('create')">Create Survey</button>
+
+        <button onclick="showPage('take')">Take Survey</button>
+
+        <button onclick="showPage('dashboard')">Dashboard</button>
+
+        <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+
+        <!-- HOME -->
+
+        <div class="box" id="home">
+
+            <h2>Welcome</h2>
+
+            <p>Public Health Survey Website</p>
+
+            <h3>Available Surveys</h3>
+
+            <div id="surveyList"></div>
+
+        </div>
+
+        <!-- CREATE SURVEY -->
+
+        <div class="box hidden" id="create">
+
+            <h2>Create Survey</h2>
+
+            <label>Survey Title</label>
+
+            <input type="text" id="title">
+
+            <label>Question</label>
+
+            <input type="text" id="question">
+
+            <label>Option 1</label>
+
+            <input type="text" id="option1">
+
+            <label>Option 2</label>
+
+            <input type="text" id="option2">
+
+            <button onclick="createSurvey()">Save Survey</button>
+
+        </div>
+
+        <!-- TAKE SURVEY -->
+
+        <div class="box hidden" id="take">
+
+            <h2>Take Survey</h2>
+
+            <select id="surveySelect" onchange="showQuestion()">
+            </select>
+
+            <div id="questionArea"></div>
+
+            <button onclick="submitAnswer()">Submit Answer</button>
+
+        </div>
+
+        <!-- DASHBOARD -->
+
+        <div class="box hidden" id="dashboard">
+
+            <h2>Survey Dashboard</h2>
+
+            <div id="results"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<footer>
+    <p>Public Health Survey Platform</p>
+</footer>
+
+<script>
+
+// VARIABLES
+
+let surveys = [];
+
+let responses = [];
+
+let isAdmin = false;
+
+
+// CONTINUE AS USER
+
+function continueAsUser() {
+
+    isAdmin = false;
+
+    document.getElementById("login").style.display = "none";
+
+    document.getElementById("website").style.display = "block";
+
+    showPage("home");
+
+}
+
+
+// ADMIN LOGIN
+
+function login() {
+
+    let pin = document.getElementById("pin").value;
+
+    if (pin == "1234") {
+
+        isAdmin = true;
+
+        document.getElementById("login").style.display = "none";
+
+        document.getElementById("website").style.display = "block";
+
+        showPage("home");
+
+        alert("Admin Login Successful!");
+
+    } else {
+
+        alert("Wrong Password!");
+
+    }
+
+}
+
+
+// LOGOUT
+
+function logout() {
+
+    isAdmin = false;
+
+    document.getElementById("website").style.display = "none";
+
+    document.getElementById("login").style.display = "block";
+
+    document.getElementById("pin").value = "";
+
+}
+
+
+// SHOW PAGES
+
+function showPage(page) {
+
+    // Hide all pages
+
+    document.getElementById("home").style.display = "none";
+
+    document.getElementById("create").style.display = "none";
+
+    document.getElementById("take").style.display = "none";
+
+    document.getElementById("dashboard").style.display = "none";
+
+
+    // Check Admin Permission
+
+    if ((page == "create" || page == "dashboard") && isAdmin == false) {
+
+        alert("Only Admin Can Access This Page!");
+
+        page = "home";
+
+    }
+
+
+    switch(page) {
+
+        case "home":
+
+            document.getElementById("home").style.display = "block";
+
+            showSurveys();
+
+            break;
+
+
+        case "create":
+
+            document.getElementById("create").style.display = "block";
+
+            break;
+
+
+        case "take":
+
+            document.getElementById("take").style.display = "block";
+
+            loadSurveys();
+
+            break;
+
+
+        case "dashboard":
+
+            document.getElementById("dashboard").style.display = "block";
+
+            showResults();
+
+            break;
+
+    }
+
+}
+
+
+// CREATE SURVEY
+
+function createSurvey() {
+
+    if (isAdmin == false) {
+
+        alert("Only Admin Can Create Survey!");
+
+        return;
+
+    }
+
+    let title = document.getElementById("title").value;
+
+    let question = document.getElementById("question").value;
+
+    let option1 = document.getElementById("option1").value;
+
+    let option2 = document.getElementById("option2").value;
+
+
+    if (title == "" || question == "" ||
+        option1 == "" || option2 == "") {
+
+        alert("Please fill all fields!");
+
+    } else {
+
+        let survey = {
+
+            id: surveys.length + 1,
+
+            title: title,
+
+            question: question,
+
+            option1: option1,
+
+            option2: option2
+
+        };
+
+        surveys.push(survey);
+
+        alert("Survey Created Successfully!");
+
+        document.getElementById("title").value = "";
+
+        document.getElementById("question").value = "";
+
+        document.getElementById("option1").value = "";
+
+        document.getElementById("option2").value = "";
+
+        showSurveys();
+
+    }
+
+}
+
+
+// DISPLAY SURVEYS
+
+function showSurveys() {
+
+    let text = "";
+
+    for (let i = 0; i < surveys.length; i++) {
+
+        text += "<h3>" + surveys[i].title + "</h3>";
+
+        text += "<p>" + surveys[i].question + "</p>";
+
+        text += "<hr>";
+
+    }
+
+    if (surveys.length == 0) {
+
+        text = "No Surveys Available";
+
+    }
+
+    document.getElementById("surveyList").innerHTML = text;
+
+}
+
+
+// LOAD SURVEYS
+
+function loadSurveys() {
+
+    let text = "";
+
+    for (let i = 0; i < surveys.length; i++) {
+
+        text += "<option value='" + surveys[i].id + "'>";
+
+        text += surveys[i].title;
+
+        text += "</option>";
+
+    }
+
+    if (surveys.length == 0) {
+
+        text = "<option value=''>No Survey Available</option>";
+
+    }
+
+    document.getElementById("surveySelect").innerHTML = text;
+
+    showQuestion();
+
+}
+
+
+// SHOW QUESTION
+
+function showQuestion() {
+
+    let id = document.getElementById("surveySelect").value;
+
+    let text = "";
+
+    for (let i = 0; i < surveys.length; i++) {
+
+        if (surveys[i].id == id) {
+
+            text += "<h3>" + surveys[i].question + "</h3>";
+
+            text += "<select id='answer'>";
+
+            text += "<option value='" + surveys[i].option1 + "'>";
+
+            text += surveys[i].option1 + "</option>";
+
+            text += "<option value='" + surveys[i].option2 + "'>";
+
+            text += surveys[i].option2 + "</option>";
+
+            text += "</select>";
+
+        }
+
+    }
+
+    if (surveys.length == 0) {
+
+        text = "Please Create a Survey First";
+
+    }
+
+    document.getElementById("questionArea").innerHTML = text;
+
+}
+
+
+// SUBMIT ANSWER
+
+function submitAnswer() {
+
+    let id = document.getElementById("surveySelect").value;
+
+    if (id == "") {
+
+        alert("No Survey Available!");
+
+    } else {
+
+        let answer = document.getElementById("answer").value;
+
+        let response = {
+
+            surveyId: id,
+
+            answer: answer
+
+        };
+
+        responses.push(response);
+
+        alert("Answer Submitted Successfully!");
+
+    }
+
+}
+
+
+// SHOW DASHBOARD
+
+function showResults() {
+
+    if (isAdmin == false) {
+
+        alert("Only Admin Can View Dashboard!");
+
+        return;
+
+    }
+
+    let text = "";
+
+    for (let i = 0; i < surveys.length; i++) {
+
+        let total = 0;
+
+        let count1 = 0;
+
+        let count2 = 0;
+
+        for (let j = 0; j < responses.length; j++) {
+
+            if (responses[j].surveyId == surveys[i].id) {
+
+                total++;
+
+                if (responses[j].answer == surveys[i].option1) {
+
+                    count1++;
+
+                } else if (responses[j].answer == surveys[i].option2) {
+
+                    count2++;
+
+                }
+
+            }
+
+        }
+
+        text += "<h3>" + surveys[i].title + "</h3>";
+
+        text += "<p>Total Responses: " + total + "</p>";
+
+        text += "<p>" + surveys[i].option1 + ": " + count1 + "</p>";
+
+        text += "<p>" + surveys[i].option2 + ": " + count2 + "</p>";
+
+        text += "<hr>";
+
+    }
+
+    if (surveys.length == 0) {
+
+        text = "No Results Available";
+
+    }
+
+    document.getElementById("results").innerHTML = text;
+
+}
+
+</script>
+
+</body>
+</html>
